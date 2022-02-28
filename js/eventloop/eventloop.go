@@ -131,7 +131,7 @@ func (e *EventLoop) Start(firstCallback func() error) error {
 	}
 }
 
-// Wait on all registered callbacks so we know nothing is still doing work.
+// WaitOnRegistered waits on all registered callbacks so we know nothing is still doing work.
 func (e *EventLoop) WaitOnRegistered() {
 	for {
 		_, awaiting := e.popAll()
