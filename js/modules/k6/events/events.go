@@ -1,3 +1,4 @@
+// Package events is implementing setInterval setTimeout and co. Not to be used mostly for testing purposes
 package events
 
 import (
@@ -42,18 +43,18 @@ func (*RootModule) NewModuleInstance(vu modules.VU) modules.Instance {
 }
 
 // Exports returns the exports of the k6 module.
-func (mi *Events) Exports() modules.Exports {
+func (e *Events) Exports() modules.Exports {
 	return modules.Exports{
 		Named: map[string]interface{}{
-			"setTimeout":    mi.setTimeout,
-			"clearTimeout":  mi.clearTimeout,
-			"setInterval":   mi.setInterval,
-			"clearInterval": mi.clearInterval,
+			"setTimeout":    e.setTimeout,
+			"clearTimeout":  e.clearTimeout,
+			"setInterval":   e.setInterval,
+			"clearInterval": e.clearInterval,
 		},
 	}
 }
 
-func (_ *Events) noop() error { return nil }
+func noop() error { return nil }
 
 func (e *Events) getTimerStopCh() (uint32, chan struct{}) {
 	id := atomic.AddUint32(&e.timerStopCounter, 1)
@@ -64,7 +65,7 @@ func (e *Events) getTimerStopCh() (uint32, chan struct{}) {
 	return id, ch
 }
 
-func (e *Events) stopTimerCh(id uint32) bool {
+func (e *Events) stopTimerCh(id uint32) bool { //nolint:unparam
 	e.timerStopsLock.Lock()
 	defer e.timerStopsLock.Unlock()
 	ch, ok := e.timerStops[id]
@@ -105,10 +106,10 @@ func (e *Events) setTimeout(callback goja.Callable, delay float64, args ...goja.
 				return e.call(callback, args)
 			})
 		case <-stopCh:
-			runOnLoop(e.noop)
+			runOnLoop(noop)
 		case <-e.vu.Context().Done():
 			e.vu.State().Logger.Warnf("setTimeout %d was stopped because the VU iteration was interrupted", id)
-			runOnLoop(e.noop)
+			runOnLoop(noop)
 		}
 	}()
 
@@ -138,11 +139,11 @@ func (e *Events) setInterval(callback goja.Callable, delay float64, args ...goja
 					return e.call(callback, args)
 				})
 			case <-stopCh:
-				runOnLoop(e.noop)
+				runOnLoop(noop)
 				return
 			case <-e.vu.Context().Done():
 				e.vu.State().Logger.Warnf("setInterval %d was stopped because the VU iteration was interrupted", id)
-				runOnLoop(e.noop)
+				runOnLoop(noop)
 				return
 			}
 		}
